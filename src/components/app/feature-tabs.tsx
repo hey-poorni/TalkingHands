@@ -13,7 +13,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, Hand, Languages, Loader2, Send } from 'lucide-react';
-import Image from 'next/image';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -37,6 +36,7 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
   
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  const [openVideoDialog, setOpenVideoDialog] = useState(false);
 
   const textToSignForm = useForm<z.infer<typeof textToSignSchema>>({
     resolver: zodResolver(textToSignSchema),
@@ -51,11 +51,13 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
   async function onTextToSignSubmit(values: z.infer<typeof textToSignSchema>) {
     setIsGenerating(true);
     setGeneratedVideo(null);
+    setOpenVideoDialog(true);
     try {
       const result = await generateSignGestures({ spokenWords: values.text });
       if(result.signLanguageVideoDataUri) {
         setGeneratedVideo(result.signLanguageVideoDataUri);
       } else {
+        setOpenVideoDialog(false);
         toast({
             variant: 'destructive',
             title: 'Generation Failed',
@@ -64,6 +66,7 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
       }
     } catch (error) {
       console.error('Error generating sign gestures:', error);
+      setOpenVideoDialog(false);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -149,36 +152,34 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
                       </FormItem>
                     )}
                   />
-                  <Dialog>
+                  <Dialog open={openVideoDialog} onOpenChange={setOpenVideoDialog}>
                     <DialogTrigger asChild>
                       <Button type="submit" disabled={isGenerating} className="w-full button-glow">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        {isGenerating ? 'Generating Video...' : 'Generate Gesture'}
+                        {isGenerating ? 'Generating...' : 'Generate Gesture'}
                       </Button>
                     </DialogTrigger>
-                    {(isGenerating || generatedVideo) && (
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Generated Sign Gesture</DialogTitle>
-                                { !isGenerating && generatedVideo && (
-                                <DialogDescription>
-                                    Animation for: &quot;{textToSignForm.getValues('text')}&quot;
-                                </DialogDescription>
-                                )}
-                            </DialogHeader>
-                            <div className="relative aspect-square w-full mx-auto">
-                                {isGenerating && !generatedVideo && (
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                    <p className="text-muted-foreground">Generating video, this may take a moment...</p>
-                                  </div>
-                                )}
-                                {generatedVideo && (
-                                  <video src={generatedVideo} controls autoPlay loop className="w-full h-full object-contain rounded-md" />
-                                )}
-                            </div>
-                        </DialogContent>
-                    )}
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Generated Sign Gesture</DialogTitle>
+                            { !isGenerating && generatedVideo && (
+                            <DialogDescription>
+                                Animation for: &quot;{textToSignForm.getValues('text')}&quot;
+                            </DialogDescription>
+                            )}
+                        </DialogHeader>
+                        <div className="relative aspect-square w-full mx-auto">
+                            {isGenerating && !generatedVideo && (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="text-muted-foreground">Generating video, this may take a moment...</p>
+                              </div>
+                            )}
+                            {generatedVideo && (
+                              <video src={generatedVideo} controls autoPlay loop className="w-full h-full object-contain rounded-md" />
+                            )}
+                        </div>
+                    </DialogContent>
                   </Dialog>
                 </form>
               </Form>
