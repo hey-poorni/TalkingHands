@@ -35,7 +35,7 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   
-  const [generatedSign, setGeneratedSign] = useState<string | null>(null);
+  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
 
   const textToSignForm = useForm<z.infer<typeof textToSignSchema>>({
@@ -50,16 +50,16 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
 
   async function onTextToSignSubmit(values: z.infer<typeof textToSignSchema>) {
     setIsGenerating(true);
-    setGeneratedSign(null);
+    setGeneratedVideo(null);
     try {
       const result = await generateSignGestures({ spokenWords: values.text });
-      if(result.signLanguageGesturesDataUri) {
-        setGeneratedSign(result.signLanguageGesturesDataUri);
+      if(result.signLanguageVideoDataUri) {
+        setGeneratedVideo(result.signLanguageVideoDataUri);
       } else {
         toast({
             variant: 'destructive',
             title: 'Generation Failed',
-            description: 'Could not generate sign gesture. The AI may not support the requested text.',
+            description: 'Could not generate sign gesture video. The AI may not support the requested text.',
         });
       }
     } catch (error) {
@@ -67,7 +67,7 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'An unexpected error occurred while generating the sign gesture.',
+        description: 'An unexpected error occurred while generating the sign gesture video.',
       });
     } finally {
       setIsGenerating(false);
@@ -131,7 +131,7 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
            <Card className="flex-1 flex flex-col">
             <CardHeader>
               <CardTitle>Text to Sign Generator</CardTitle>
-              <CardDescription>Convert spoken words into a 3D sign language animation.</CardDescription>
+              <CardDescription>Convert spoken words into a sign language video animation.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
               <Form {...textToSignForm}>
@@ -153,19 +153,29 @@ export function FeatureTabs({ conversationHistory }: FeatureTabsProps) {
                     <DialogTrigger asChild>
                       <Button type="submit" disabled={isGenerating} className="w-full button-glow">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        Generate Gesture
+                        {isGenerating ? 'Generating Video...' : 'Generate Gesture'}
                       </Button>
                     </DialogTrigger>
-                    {generatedSign && (
+                    {(isGenerating || generatedVideo) && (
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Generated Sign Gesture</DialogTitle>
+                                { !isGenerating && generatedVideo && (
                                 <DialogDescription>
                                     Animation for: &quot;{textToSignForm.getValues('text')}&quot;
                                 </DialogDescription>
+                                )}
                             </DialogHeader>
                             <div className="relative aspect-square w-full mx-auto">
-                                <Image src={generatedSign} alt="Generated sign language gesture" layout="fill" objectFit="contain" />
+                                {isGenerating && !generatedVideo && (
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    <p className="text-muted-foreground">Generating video, this may take a moment...</p>
+                                  </div>
+                                )}
+                                {generatedVideo && (
+                                  <video src={generatedVideo} controls autoPlay loop className="w-full h-full object-contain rounded-md" />
+                                )}
                             </div>
                         </DialogContent>
                     )}
