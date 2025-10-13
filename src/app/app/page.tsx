@@ -3,7 +3,7 @@
 import { ControlsPanel } from "@/components/app/controls-panel";
 import { FeatureTabs } from "@/components/app/feature-tabs";
 import { VideoFeed } from "@/components/app/video-feed";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 export default function AppPage() {
   const [conversationHistory, setConversationHistory] = useState<string[]>([]);

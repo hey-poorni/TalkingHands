@@ -2,6 +2,7 @@
 
 import { translateSignLanguage } from '@/ai/flows/real-time-sign-language-translation';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Camera, Heart, Mic, Smile, ThumbsUp, Video, VideoOff } from 'lucide-react';
@@ -185,6 +186,7 @@ export const VideoFeed: FC<VideoFeedProps> = ({ onNewTranslation, spokenWords })
             </Button>
         </div>
       </div>
+      <canvas ref={canvasRef} className="hidden" />
     </Card>
   );
 };
